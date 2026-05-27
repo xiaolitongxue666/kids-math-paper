@@ -1,102 +1,241 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="儿童数学练习题生成器 — A4 可打印">
-  <title>数学练习题生成器</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学练习题生成器</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333}
+/* 工具栏 */
+.toolbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:2px solid #e8e8e8;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.toolbar-inner{max-width:960px;margin:0 auto;padding:12px 20px}
+.toolbar-title{font-size:20px;font-weight:700;margin-bottom:10px;color:#1a1a2e}
+.controls-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;align-items:flex-end}
+.control-group{display:flex;flex-direction:column;gap:2px;min-width:90px}
+.control-group label{font-size:11px;font-weight:600;color:#666}
+.control-group select,.control-group input{padding:5px 8px;border:1px solid #d0d5dd;border-radius:5px;font-size:13px;background:#fff}
+.control-group input[type="number"]{width:70px}
+.control-group select:focus,.control-group input:focus{outline:none;border-color:#4f6ef7;box-shadow:0 0 0 2px rgba(79,110,247,.15)}
+.checkbox-row{display:flex;flex-wrap:wrap;gap:2px 8px}
+.checkbox-label{display:inline-flex;align-items:center;gap:3px;font-size:13px;cursor:pointer;padding:2px 5px;border-radius:3px}
+.checkbox-label:hover{background:#f0f4ff}
+.checkbox-label input[type="checkbox"]{accent-color:#4f6ef7;width:13px;height:13px;cursor:pointer}
+.actions{gap:8px;padding-top:4px}
+.btn{padding:7px 18px;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-primary{background:#4f6ef7;color:#fff}
+.btn-primary:hover{background:#3b5de7}
+.btn-accent{background:#10b981;color:#fff}
+.btn-accent:hover{background:#059669}
+/* 打印区域 */
+#printContainer{max-width:960px;margin:20px auto;background:#fff;border-radius:6px;min-height:200px;padding:0}
+.print-page{padding:15mm 18mm;margin:0 auto 20px auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);position:relative}
+.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:16px}
+.page-title{font-size:18px;font-weight:700}
+.page-meta{display:flex;gap:16px;font-size:12px}
+.page-meta .field{display:inline-flex;align-items:center;gap:4px}
+.page-meta .field .blank{display:inline-block;width:50px;border-bottom:1px solid #999}
+.question-grid{display:grid;gap:6px 20px;align-items:start}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:1fr 1fr 1fr}
+.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.question-item{display:flex;align-items:baseline;gap:4px;padding:3px 0;font-size:15px;line-height:1.8}
+.q-num{font-weight:600;min-width:26px;color:#555}
+.q-body{display:inline-flex;align-items:baseline;gap:3px}
+.q-body .op{font-weight:600}
+.q-body .eq{font-weight:400;color:#888}
+.q-body .blank{display:inline-block;width:44px;border-bottom:1.5px solid #999;height:1.2em;box-sizing:border-box}
+.q-answer{font-size:12px;color:#e11d48;font-weight:600;margin-left:4px}
+.answer-sheet-page{padding:15mm 18mm;margin:0 auto 20px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.answer-sheet-page .page-header{border-bottom-color:#e11d48}
+.answer-list{columns:3;column-gap:16px;font-size:13px;line-height:2}
+.ans-item{break-inside:avoid;padding:1px 0}
+.ans-num{font-weight:600;color:#555;min-width:24px;display:inline-block}
+.ans-val{font-weight:600;color:#e11d48}
+.page-footer{text-align:center;font-size:10px;color:#aaa;border-top:1px solid #e8e8e8;padding-top:5px;margin-top:10px}
+@media print{
+  html,body{background:#fff;margin:0;padding:0}
+  .toolbar{display:none!important}
+  #printContainer{max-width:100%;margin:0;border-radius:0}
+  .print-page{width:100%;height:297mm;padding:15mm 18mm;margin:0;box-shadow:none;page-break-after:always;page-break-inside:avoid;position:relative;overflow:hidden}
+  .print-page:last-child{page-break-after:auto}
+  .answer-sheet-page{width:100%;height:297mm;padding:15mm 18mm;margin:0;box-shadow:none;page-break-before:always;page-break-inside:avoid;position:relative;overflow:hidden}
+  .page-footer{position:absolute;bottom:10mm;left:18mm;right:18mm}
+  @page{size:A4;margin:0}
+}
+/* 错误提示 */
+#errorBox{display:none;max-width:960px;margin:20px auto;padding:16px 20px;background:#fff0f0;border:1px solid #e00;border-radius:6px;color:#c00;font-size:14px;white-space:pre-wrap}
+</style>
 </head>
 <body>
-  <!-- ====== 控制面板（屏幕可见，打印时隐藏） ====== -->
-  <div class="toolbar" id="toolbar">
-    <div class="toolbar-inner">
-      <h1 class="toolbar-title">🧮 数学练习题生成器</h1>
 
-      <div class="controls-row">
-        <div class="control-group checkbox-group">
-          <label>题型（多选）</label>
-          <div class="checkbox-row">
-            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="add" checked> 加法</label>
-            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="sub" checked> 减法</label>
-            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="mul"> 乘法</label>
-            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="div"> 除法</label>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label for="difficulty">难度</label>
-          <select id="difficulty">
-            <option value="range20">20以内</option>
-            <option value="range50" selected>50以内</option>
-            <option value="range100">100以内</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label for="perPage">每页题量</label>
-          <select id="perPage">
-            <option value="8">8 题</option>
-            <option value="10">10 题</option>
-            <option value="12">12 题</option>
-            <option value="15" selected>15 题</option>
-            <option value="18">18 题</option>
-            <option value="20">20 题</option>
-            <option value="24">24 题</option>
-            <option value="30">30 题</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label for="columns">每行列数</label>
-          <select id="columns">
-            <option value="2">2 列</option>
-            <option value="3" selected>3 列</option>
-            <option value="4">4 列</option>
-          </select>
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <h1 class="toolbar-title">数学练习题生成器</h1>
+    <div class="controls-row">
+      <div class="control-group">
+        <label>题型</label>
+        <div class="checkbox-row">
+          <label class="checkbox-label"><input type="checkbox" class="op-cb" value="add" checked> 加法</label>
+          <label class="checkbox-label"><input type="checkbox" class="op-cb" value="sub" checked> 减法</label>
+          <label class="checkbox-label"><input type="checkbox" class="op-cb" value="mul"> 乘法</label>
+          <label class="checkbox-label"><input type="checkbox" class="op-cb" value="div"> 除法</label>
         </div>
       </div>
-
-      <div class="controls-row">
-        <div class="control-group">
-          <label for="showAnswer">显示答案</label>
-          <select id="showAnswer">
-            <option value="no">不显示</option>
-            <option value="after">每题后</option>
-            <option value="separate">尾页汇总</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <label for="pages">需要几页</label>
-          <input type="number" id="pages" value="1" min="1" max="50">
-        </div>
-
-        <div class="control-group">
-          <label for="seed">随机种子（留空随机）</label>
-          <input type="number" id="seed" min="0" placeholder="如: 42">
-        </div>
-
-        <div class="control-group" id="scoreGroup">
-          <label for="scorePerQ">每题分值</label>
-          <input type="number" id="scorePerQ" value="5" min="1" max="20">
-        </div>
+      <div class="control-group">
+        <label for="difficulty">范围</label>
+        <select id="difficulty">
+          <option value="range20">20以内</option>
+          <option value="range50" selected>50以内</option>
+          <option value="range100">100以内</option>
+        </select>
       </div>
-
-      <div class="controls-row actions">
-        <button class="btn btn-primary" id="btnGenerate">🔄 重新生成</button>
-        <button class="btn btn-accent" id="btnPrint">🖨️ 打印</button>
+      <div class="control-group">
+        <label for="perPage">每页题量</label>
+        <select id="perPage">
+          <option value="8">8</option>
+          <option value="10">10</option>
+          <option value="12">12</option>
+          <option value="15" selected>15</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+          <option value="24">24</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+          <option value="60">60</option>
+          <option value="70">70</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="columns">列数</label>
+        <select id="columns">
+          <option value="2">2列</option>
+          <option value="3" selected>3列</option>
+          <option value="4">4列</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="showAnswer">答案</label>
+        <select id="showAnswer">
+          <option value="no">不显示</option>
+          <option value="after">每题后</option>
+          <option value="separate">尾页</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="pages">页数</label>
+        <input type="number" id="pages" value="1" min="1" max="50">
+      </div>
+      <div class="control-group">
+        <label for="seed">随机种子</label>
+        <input type="number" id="seed" min="0" placeholder="42">
       </div>
     </div>
+    <div class="controls-row actions">
+      <button class="btn btn-primary" id="btnGenerate">重新生成</button>
+      <button class="btn btn-accent" id="btnPrint">打印</button>
+    </div>
   </div>
+</div>
 
-  <!-- ====== 预览 / 打印区域 ====== -->
-  <div class="print-container" id="printContainer">
-    <!-- 由 JS 动态渲染 -->
-  </div>
+<div id="errorBox"></div>
+<div id="printContainer"></div>
 
-  <script src="js/engine.js"></script>
-  <script src="js/print.js"></script>
-  <script src="js/app.js"></script>
+<script>
+// ===================== engine.js =====================
+(function(){
+'use strict';
+function createRng(seed){let s=seed|0;return function(){s|=0;s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
+var DIFF={range20:{label:'20以内',add:{min:1,max:20},sub:{min:1,max:20},mul:{min:1,max:5},div:{min:1,max:5}},range50:{label:'50以内',add:{min:10,max:50},sub:{min:10,max:50},mul:{min:2,max:9},div:{min:2,max:9}},range100:{label:'100以内',add:{min:50,max:99},sub:{min:50,max:99},mul:{min:6,max:12},div:{min:6,max:12}}};
+var OPS={add:'+',sub:'−',mul:'×',div:'÷'};
+function randInt(min,max,rng){return Math.floor(rng()*(max-min+1))+min}
+function genQ(type,diff,rng){
+  var cfg=DIFF[diff],range=cfg[type]||cfg.add,a=randInt(range.min,range.max,rng),b,ans;
+  switch(type){
+    case'add':b=randInt(range.min,range.max,rng);ans=a+b;break;
+    case'sub':b=randInt(range.min,Math.min(a,range.max),rng);ans=a-b;break;
+    case'mul':b=randInt(range.min,range.max,rng);ans=a*b;break;
+    case'div':
+      b=randInt(range.min,range.max,rng);var q=randInt(range.min,10,rng);
+      if(b*q>100&&diff==='range20'){b=randInt(1,5,rng);ans=randInt(1,9,rng);return{type,a:b*ans,b,ans,symbol:OPS[type]}}
+      ans=q;return{type,a:b*ans,b,ans,symbol:OPS[type]};
+    default:b=randInt(range.min,range.max,rng);ans=a+b
+  }
+  return{type,a,b,ans,symbol:OPS[type]}
+}
+window.Engine={
+  generateBatch:function(p){
+    var rng=p.seed?createRng(+p.seed):createRng(Date.now()),qs=[],types=p.types&&p.types.length?p.types:['add','sub'];
+    for(var i=0;i<p.count;i++)qs.push(genQ(types[i%types.length],p.difficulty,rng));
+    return qs
+  },
+  formatQuestion:function(q,i){
+    var n=i+1;
+    return{n,text:q.a+' '+q.symbol+' '+q.b+' = ___',answer:q.ans,
+      html:'<span class="q-num">'+n+'.</span><span class="q-body"><span class="op">'+q.a+'</span><span class="op">'+q.symbol+'</span><span class="op">'+q.b+'</span><span class="eq">=</span><span class="blank"></span></span>'}
+  }
+};
+})();
+
+// ===================== print.js =====================
+(function(){
+'use strict';
+window.PrintLayout={
+  renderAll:function(qs,opts){
+    opts=opts||{};var pp=opts.perPage||15,cols=opts.cols||3,sa=opts.showAnswer||'no',sp=opts.scorePerQ||5;
+    var fmt=qs.map(function(q,i){return Engine.formatQuestion(q,i)}),pages=[];
+    for(var i=0;i<fmt.length;i+=pp)pages.push(fmt.slice(i,i+pp));
+    var h='';
+    for(i=0;i<pages.length;i++)h+=renderPage(pages[i],{n:i+1,t:pages.length,cols:cols,sa:sa,sp:sp});
+    if(sa==='separate'&&fmt.length)h+=renderAns(fmt);
+    return h
+  }
+};
+function renderPage(qs,p){
+  var title=p.t===1?'数学练习题':'数学练习题 — 第'+p.n+'页',cc='cols-'+p.cols,html='';
+  for(var i=0;i<qs.length;i++){
+    var ah='';
+    if(p.sa==='after')ah='<span class="q-answer">('+qs[i].answer+')</span>';
+    html+='<div class="question-item">'+qs[i].html+ah+'</div>'
+  }
+  var ts=p.sp*qs.length;
+  return'<div class="print-page"><div class="page-header"><span class="page-title">'+title+'</span><span class="page-meta"><span class="field">姓名:<span class="blank"></span></span><span class="field">日期:<span class="blank"></span></span><span class="field">用时:<span class="blank"></span>分</span><span class="field">得分:___/'+ts+'</span></span></div><div class="question-grid '+cc+'">'+html+'</div><div class="page-footer">共'+p.t+'页 · 第'+p.n+'页</div></div>'
+}
+function renderAns(all){
+  var h='';
+  for(var i=0;i<all.length;i++)h+='<div class="ans-item"><span class="ans-num">'+(i+1)+'.</span><span class="ans-val">'+all[i].answer+'</span></div>';
+  return'<div class="answer-sheet-page"><div class="page-header"><span class="page-title">参考答案</span><span class="page-meta"><span>共'+all.length+'题</span></span></div><div class="answer-list">'+h+'</div><div class="page-footer">参考答案</div></div>'
+}
+})();
+
+// ===================== app.js =====================
+(function(){
+'use strict';
+var err=document.getElementById('errorBox'),con=document.getElementById('printContainer');
+function showError(m){err.style.display='block';err.textContent='错误: '+m;con.innerHTML=''}
+function $(id){return document.getElementById(id)}
+function getOpts(){
+  var cbs=document.querySelectorAll('.op-cb:checked'),types=[];
+  for(var i=0;i<cbs.length;i++)types.push(cbs[i].value);
+  var pp=parseInt($('perPage').value,10)||15,pg=parseInt($('pages').value,10)||1;
+  return{types:types,pp:pp,pg:pg,count:pp*pg,cols:parseInt($('columns').value,10)||3,sa:$('showAnswer').value,seed:$('seed').value,sp:parseInt($('scorePerQ')?$('scorePerQ').value:5,10)||5}
+}
+function gen(){
+  try{
+    var o=getOpts();
+    if(!o.types.length){showError('请至少选择一种题型');return}
+    var qs=Engine.generateBatch({types:o.types,count:o.count,difficulty:$('difficulty').value,seed:o.seed||void 0});
+    var h=PrintLayout.renderAll(qs,{perPage:o.pp,cols:o.cols,showAnswer:o.sa,scorePerQ:o.sp});
+    con.innerHTML=h;err.style.display='none'
+  }catch(e){showError(e.message+'\\n'+e.stack)}
+}
+try{
+  $('btnGenerate').addEventListener('click',gen);
+  $('btnPrint').addEventListener('click',function(){window.print()});
+  gen()
+}catch(e){showError(e.message)}
+})();
+</script>
 </body>
 </html>
