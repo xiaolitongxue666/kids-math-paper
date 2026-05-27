@@ -15,8 +15,10 @@
 
   // ---------- 读取控件配置 ----------
   function getOptions() {
+    const checkedTypes = Array.from(document.querySelectorAll('.op-cb:checked'))
+      .map(cb => cb.value);
     return {
-      type:       $('opType').value,
+      types:      checkedTypes,
       difficulty: $('difficulty').value,
       count:      parseInt($('count').value, 10),
       cols:       parseInt($('columns').value, 10),
@@ -32,7 +34,7 @@
     const opts = getOptions();
 
     const questions = Engine.generateBatch({
-      type:       opts.type,
+      types:      opts.types,
       count:      opts.count,
       difficulty: opts.difficulty,
       seed:       opts.seed || undefined,

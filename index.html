@@ -14,23 +14,22 @@
       <h1 class="toolbar-title">🧮 数学练习题生成器</h1>
 
       <div class="controls-row">
-        <div class="control-group">
-          <label for="opType">题型</label>
-          <select id="opType">
-            <option value="add">加法</option>
-            <option value="sub">减法</option>
-            <option value="mul">乘法</option>
-            <option value="div">除法</option>
-            <option value="mixed" selected>混合运算</option>
-          </select>
+        <div class="control-group checkbox-group">
+          <label>题型（多选）</label>
+          <div class="checkbox-row">
+            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="add" checked> 加法</label>
+            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="sub" checked> 减法</label>
+            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="mul"> 乘法</label>
+            <label class="checkbox-label"><input type="checkbox" class="op-cb" value="div"> 除法</label>
+          </div>
         </div>
 
         <div class="control-group">
           <label for="difficulty">难度</label>
           <select id="difficulty">
-            <option value="easy">简单</option>
-            <option value="medium" selected>中等</option>
-            <option value="hard">困难</option>
+            <option value="range20">20以内</option>
+            <option value="range50" selected>50以内</option>
+            <option value="range100">100以内</option>
           </select>
         </div>
 

@@ -1,7 +1,7 @@
 /**
  * engine.js — 数学题目生成引擎
- * 支持加法、减法、乘法、除法、混合运算
- * 三级难度：easy / medium / hard
+ * 支持加法、减法、乘法、除法（多选）
+ * 三级难度：range20 / range50 / range100
  */
 
 const Engine = (() => {
@@ -22,24 +22,24 @@ const Engine = (() => {
 
   // ---------- 难度参数配置 ----------
   const DIFFICULTY = {
-    easy: {
-      label: '简单',
-      add:    { min: 1,  max: 10  },
-      sub:    { min: 1,  max: 10  },
+    range20: {
+      label: '20以内',
+      add:    { min: 1,  max: 20  },
+      sub:    { min: 1,  max: 20  },
       mul:    { min: 1,  max: 5   },
       div:    { min: 1,  max: 5   },
       score:  5,
     },
-    medium: {
-      label: '中等',
+    range50: {
+      label: '50以内',
       add:    { min: 10, max: 50  },
       sub:    { min: 10, max: 50  },
       mul:    { min: 2,  max: 9   },
       div:    { min: 2,  max: 9   },
       score:  5,
     },
-    hard: {
-      label: '困难',
+    range100: {
+      label: '100以内',
       add:    { min: 50, max: 99  },
       sub:    { min: 50, max: 99  },
       mul:    { min: 6,  max: 12  },
@@ -90,7 +90,7 @@ const Engine = (() => {
         b = Math.max(range.min, b);
         const adjA = b * quotient;
         // 如果 adjA 超大，缩小 b
-        if (adjA > 100 && diff === 'easy') {
+        if (adjA > 100 && diff === 'range20') {
           b = randInt(1, 5, rng);
           answer = randInt(1, 9, rng);
           return { type, a: b * answer, b, answer, symbol: OP_SYMBOL[type] };
@@ -112,15 +112,16 @@ const Engine = (() => {
   }
 
   // ---------- 生成一组题目 ----------
-  function generateBatch({ type, count, difficulty, seed }) {
+  function generateBatch({ types, count, difficulty, seed }) {
     const rng = seed != null && seed !== '' ? createRng(Number(seed)) : createRng(Date.now());
     const questions = [];
 
+    if (!types || types.length === 0) {
+      types = ['add', 'sub']; // 默认加法和减法
+    }
+
     for (let i = 0; i < count; i++) {
-      let opType = type;
-      if (type === 'mixed') {
-        opType = OP_LIST[i % 4]; // 轮流四种题型，保证分布均匀
-      }
+      const opType = types[i % types.length]; // 轮流选中题型，保证分布均匀
       questions.push(generateQuestion(opType, difficulty, rng));
     }
 
