@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="儿童数学练习题生成器 — A4 可打印">
+  <title>数学练习题生成器</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ====== 控制面板（屏幕可见，打印时隐藏） ====== -->
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-inner">
+      <h1 class="toolbar-title">🧮 数学练习题生成器</h1>
+
+      <div class="controls-row">
+        <div class="control-group">
+          <label for="opType">题型</label>
+          <select id="opType">
+            <option value="add">加法</option>
+            <option value="sub">减法</option>
+            <option value="mul">乘法</option>
+            <option value="div">除法</option>
+            <option value="mixed" selected>混合运算</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="difficulty">难度</label>
+          <select id="difficulty">
+            <option value="easy">简单</option>
+            <option value="medium" selected>中等</option>
+            <option value="hard">困难</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="count">题量</label>
+          <select id="count">
+            <option value="10">10 题</option>
+            <option value="20" selected>20 题</option>
+            <option value="30">30 题</option>
+            <option value="50">50 题</option>
+            <option value="100">100 题</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="columns">每行列数</label>
+          <select id="columns">
+            <option value="2">2 列</option>
+            <option value="3" selected>3 列</option>
+            <option value="4">4 列</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <div class="control-group">
+          <label for="showAnswer">显示答案</label>
+          <select id="showAnswer">
+            <option value="no">不显示</option>
+            <option value="after">每题后</option>
+            <option value="separate">尾页汇总</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="pageMode">分页</label>
+          <select id="pageMode">
+            <option value="single">单页</option>
+            <option value="multi" selected>多页（自动分页）</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="seed">随机种子（留空随机）</label>
+          <input type="number" id="seed" min="0" placeholder="如: 42">
+        </div>
+
+        <div class="control-group" id="scoreGroup">
+          <label for="scorePerQ">每题分值</label>
+          <input type="number" id="scorePerQ" value="5" min="1" max="20">
+        </div>
+      </div>
+
+      <div class="controls-row actions">
+        <button class="btn btn-primary" id="btnGenerate">🔄 重新生成</button>
+        <button class="btn btn-accent" id="btnPrint">🖨️ 打印</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 预览 / 打印区域 ====== -->
+  <div class="print-container" id="printContainer">
+    <!-- 由 JS 动态渲染 -->
+  </div>
+
+  <script src="js/engine.js"></script>
+  <script src="js/print.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
