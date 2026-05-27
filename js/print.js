@@ -6,26 +6,13 @@
 const PrintLayout = (() => {
   'use strict';
 
-  // 每页可容纳的题目数（取决于字号和列数）
-  // 估算值：3列时约 15-18 题/页，2列时约 12-14 题/页
-  const ITEMS_PER_PAGE = {
-    2: 14,
-    3: 18,
-    4: 24,
-  };
-
   /**
    * 将题目分页
    * @param {Array} questions - Engine.formatQuestion() 输出
-   * @param {number} cols - 列数（2/3/4）
-   * @param {string} pageMode - 'single' | 'multi'
+   * @param {number} perPage - 每页题数
    * @returns {Array<Array>} 每个元素是一页的题目数组
    */
-  function paginate(questions, cols, pageMode) {
-    if (pageMode === 'single') {
-      return [questions]; // 全部塞到一页
-    }
-    const perPage = ITEMS_PER_PAGE[cols] || 18;
+  function paginate(questions, perPage) {
     const pages = [];
     for (let i = 0; i < questions.length; i += perPage) {
       pages.push(questions.slice(i, i + perPage));
@@ -41,11 +28,10 @@ const PrintLayout = (() => {
    * @param {number} cols - 列数
    * @param {string} showAnswer - 'no' | 'after' | 'separate'
    * @param {number} scorePerQ - 每题分值
-   * @param {string} pageMode - 'single' | 'multi'
    * @returns {string} HTML 字符串
    */
-  function renderPage(pageQuestions, { pageNum, totalPages, cols, showAnswer, scorePerQ, pageMode }) {
-    const title = pageMode === 'single' ? '数学练习题' : `数学练习题 — 第 ${pageNum} 页`;
+  function renderPage(pageQuestions, { pageNum, totalPages, cols, showAnswer, scorePerQ }) {
+    const title = totalPages === 1 ? '数学练习题' : `数学练习题 — 第 ${pageNum} 页`;
     const colsClass = `cols-${cols}`;
 
     let questionsHtml = '';
@@ -124,10 +110,10 @@ const PrintLayout = (() => {
    * @returns {string} 完整 HTML（不含 <html>/<head>，仅内容区）
    */
   function renderAll(questions, opts) {
-    const { cols = 3, showAnswer = 'no', scorePerQ = 5, pageMode = 'multi' } = opts;
+    const { perPage = 15, cols = 3, showAnswer = 'no', scorePerQ = 5 } = opts;
 
     const formatted = questions.map((q, i) => Engine.formatQuestion(q, i));
-    const pages = paginate(formatted, cols, pageMode);
+    const pages = paginate(formatted, perPage);
     let html = '';
 
     for (let i = 0; i < pages.length; i++) {
@@ -137,7 +123,6 @@ const PrintLayout = (() => {
         cols,
         showAnswer,
         scorePerQ,
-        pageMode,
       });
     }
 

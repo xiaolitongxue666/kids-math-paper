@@ -242,8 +242,17 @@ body {
 
 .question-item .q-body {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 4px;
+}
+
+.question-item .q-body .blank {
+  display: inline-block;
+  width: 50px;
+  border-bottom: 1.5px solid #999;
+  margin: 0 1px;
+  height: 1.2em;
+  box-sizing: border-box;
 }
 
 .question-item .q-body .op {
@@ -253,13 +262,6 @@ body {
 .question-item .q-body .eq {
   font-weight: 400;
   color: #888;
-}
-
-.question-item .q-body .blank {
-  display: inline-block;
-  width: 50px;
-  border-bottom: 1px solid #999;
-  margin: 0 2px;
 }
 
 /* ---------- 答案（每题后） ---------- */

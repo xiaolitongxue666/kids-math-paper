@@ -17,13 +17,15 @@
   function getOptions() {
     const checkedTypes = Array.from(document.querySelectorAll('.op-cb:checked'))
       .map(cb => cb.value);
+    const perPage = parseInt($('perPage').value, 10) || 15;
+    const pages   = parseInt($('pages').value, 10) || 1;
     return {
       types:      checkedTypes,
-      difficulty: $('difficulty').value,
-      count:      parseInt($('count').value, 10),
+      perPage:    perPage,
+      pages:      pages,
+      count:      perPage * pages,     // 总题数
       cols:       parseInt($('columns').value, 10),
       showAnswer: $('showAnswer').value,
-      pageMode:   $('pageMode').value,
       seed:       $('seed').value,
       scorePerQ:  parseInt($('scorePerQ').value, 10) || 5,
     };
@@ -41,10 +43,10 @@
     });
 
     const html = PrintLayout.renderAll(questions, {
+      perPage:    opts.perPage,
       cols:       opts.cols,
       showAnswer: opts.showAnswer,
       scorePerQ:  opts.scorePerQ,
-      pageMode:   opts.pageMode,
     });
 
     container.innerHTML = html;

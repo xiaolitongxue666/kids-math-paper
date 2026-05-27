@@ -34,13 +34,16 @@
         </div>
 
         <div class="control-group">
-          <label for="count">题量</label>
-          <select id="count">
+          <label for="perPage">每页题量</label>
+          <select id="perPage">
+            <option value="8">8 题</option>
             <option value="10">10 题</option>
-            <option value="20" selected>20 题</option>
+            <option value="12">12 题</option>
+            <option value="15" selected>15 题</option>
+            <option value="18">18 题</option>
+            <option value="20">20 题</option>
+            <option value="24">24 题</option>
             <option value="30">30 题</option>
-            <option value="50">50 题</option>
-            <option value="100">100 题</option>
           </select>
         </div>
 
@@ -65,11 +68,8 @@
         </div>
 
         <div class="control-group">
-          <label for="pageMode">分页</label>
-          <select id="pageMode">
-            <option value="single">单页</option>
-            <option value="multi" selected>多页（自动分页）</option>
-          </select>
+          <label for="pages">需要几页</label>
+          <input type="number" id="pages" value="1" min="1" max="50">
         </div>
 
         <div class="control-group">
