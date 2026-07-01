@@ -21,6 +21,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .checkbox-label{display:inline-flex;align-items:center;gap:3px;font-size:13px;cursor:pointer;padding:2px 5px;border-radius:3px}
 .checkbox-label:hover{background:#f0f4ff}
 .checkbox-label input[type="checkbox"]{accent-color:#4f6ef7;width:13px;height:13px;cursor:pointer}
+.pct-row{display:flex;gap:8px;margin-bottom:2px}
+.pct-field{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#555}
+.pct-field label{font-size:11px;font-weight:600;color:#666;cursor:default}
+.pct-field input[type="number"]{width:44px;padding:3px 5px;font-size:12px}
 .actions{gap:8px;padding-top:4px}
 .btn{padding:7px 18px;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer}
 .btn-primary{background:#4f6ef7;color:#fff}
@@ -46,6 +50,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .q-body .eq{font-weight:400;color:#888}
 .q-body .blank{display:inline-block;width:44px;border-bottom:1.5px solid #999;height:1.2em;box-sizing:border-box}
 .q-answer{font-size:12px;color:#e11d48;font-weight:600;margin-left:4px}
+.q-hint{font-size:11px;color:#4f6ef7;font-weight:600;margin-left:4px;white-space:nowrap}
 .answer-sheet-page{padding:15mm 18mm;margin:0 auto 20px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .answer-sheet-page .page-header{border-bottom-color:#e11d48}
 .answer-list{columns:3;column-gap:16px;font-size:13px;line-height:2}
@@ -124,6 +129,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
         </select>
       </div>
       <div class="control-group">
+        <label>进位/借位</label>
+        <div class="pct-row">
+          <span class="pct-field"><label for="carryPct">进位</label><input type="number" id="carryPct" value="10" min="0" max="100">%</span>
+          <span class="pct-field"><label for="borrowPct">借位</label><input type="number" id="borrowPct" value="10" min="0" max="100">%</span>
+        </div>
+        <label class="checkbox-label"><input type="checkbox" id="showHint" checked> 显示提示</label>
+      </div>
+      <div class="control-group">
         <label for="pages">页数</label>
         <input type="number" id="pages" value="1" min="1" max="50">
       </div>
@@ -150,6 +163,40 @@ function createRng(seed){let s=seed|0;return function(){s|=0;s=(s+0x6D2B79F5)|0;
 var DIFF={range20:{label:'20以内',add:{min:1,max:20},sub:{min:1,max:20},mul:{min:1,max:5},div:{min:1,max:5}},range50:{label:'50以内',add:{min:10,max:50},sub:{min:10,max:50},mul:{min:2,max:9},div:{min:2,max:9}},range100:{label:'100以内',add:{min:50,max:99},sub:{min:50,max:99},mul:{min:6,max:12},div:{min:6,max:12}}};
 var OPS={add:'+',sub:'−',mul:'×',div:'÷'};
 function randInt(min,max,rng){return Math.floor(rng()*(max-min+1))+min}
+function shuffle(arr,rng){for(var i=arr.length-1;i>0;i--){var j=Math.floor(rng()*(i+1)),t=arr[i];arr[i]=arr[j];arr[j]=t}return arr}
+function needsCarry(a,b){return(a%10)+(b%10)>=10}
+function needsBorrow(a,b){return a>b&&(a%10)<(b%10)}
+function genCarryAdd(diff,rng){
+  var range=DIFF[diff].add,i,a,b;
+  for(i=0;i<200;i++){
+    var loA=randInt(0,9,rng),loB=randInt(Math.max(0,10-loA),9,rng);
+    if(loA+loB<10)continue;
+    var hiMinA=Math.max(0,Math.ceil((range.min-loA)/10)),hiMaxA=Math.floor((range.max-loA)/10);
+    var hiMinB=Math.max(0,Math.ceil((range.min-loB)/10)),hiMaxB=Math.floor((range.max-loB)/10);
+    if(hiMinA>hiMaxA||hiMinB>hiMaxB)continue;
+    a=randInt(hiMinA,hiMaxA,rng)*10+loA;b=randInt(hiMinB,hiMaxB,rng)*10+loB;
+    if(a>=range.min&&a<=range.max&&b>=range.min&&b<=range.max&&needsCarry(a,b))return{type:'add',a:a,b:b,ans:a+b,symbol:OPS.add,tag:'carry'}
+  }
+  for(i=0;i<100;i++){a=randInt(range.min,range.max,rng);b=randInt(range.min,range.max,rng);if(needsCarry(a,b))return{type:'add',a:a,b:b,ans:a+b,symbol:OPS.add,tag:'carry'}}
+  b=randInt(range.min,range.max,rng);a=randInt(Math.max(range.min,b),range.max,rng);
+  return{type:'add',a:a,b:b,ans:a+b,symbol:OPS.add,tag:'carry'}
+}
+function genBorrowSub(diff,rng){
+  var range=DIFF[diff].sub,i,a,b;
+  for(i=0;i<200;i++){
+    var loB=randInt(1,9,rng),loA=randInt(0,loB-1,rng);
+    var hiMinA=Math.max(0,Math.ceil((range.min-loA)/10)),hiMaxA=Math.floor((range.max-loA)/10);
+    var hiMinB=Math.max(0,Math.ceil((range.min-loB)/10)),hiMaxB=Math.floor((range.max-loB)/10);
+    if(hiMinA>hiMaxA||hiMinB>hiMaxB)continue;
+    var hiB=randInt(hiMinB,hiMaxB,rng),hiA=randInt(Math.max(hiB+1,hiMinA),hiMaxA,rng);
+    if(hiA>hiMaxA)continue;
+    a=hiA*10+loA;b=hiB*10+loB;
+    if(a>=range.min&&a<=range.max&&b>=range.min&&b<=range.max&&a>b&&needsBorrow(a,b))return{type:'sub',a:a,b:b,ans:a-b,symbol:OPS.sub,tag:'borrow'}
+  }
+  for(i=0;i<100;i++){a=randInt(range.min,range.max,rng);b=randInt(range.min,Math.min(a,range.max),rng);if(needsBorrow(a,b))return{type:'sub',a:a,b:b,ans:a-b,symbol:OPS.sub,tag:'borrow'}}
+  a=randInt(range.min,range.max,rng);b=randInt(range.min,a,rng);
+  return{type:'sub',a:a,b:b,ans:a-b,symbol:OPS.sub,tag:'borrow'}
+}
 function genQ(type,diff,rng){
   var cfg=DIFF[diff],range=cfg[type]||cfg.add,a=randInt(range.min,range.max,rng),b,ans;
   switch(type){
@@ -167,13 +214,26 @@ function genQ(type,diff,rng){
 window.Engine={
   generateBatch:function(p){
     var rng=p.seed?createRng(+p.seed):createRng(Date.now()),qs=[],types=p.types&&p.types.length?p.types:['add','sub'];
-    for(var i=0;i<p.count;i++)qs.push(genQ(types[i%types.length],p.difficulty,rng));
+    var count=p.count,carryPct=typeof p.carryPct==='number'?p.carryPct:10,borrowPct=typeof p.borrowPct==='number'?p.borrowPct:10;
+    var carryCount=types.indexOf('add')>=0?Math.round(count*carryPct/100):0,borrowCount=types.indexOf('sub')>=0?Math.round(count*borrowPct/100):0;
+    if(carryCount+borrowCount>count)borrowCount=count-carryCount;
+    var slots=[],i;for(i=0;i<count;i++)slots.push(i);
+    shuffle(slots,rng);
+    var carrySet={},borrowSet={};
+    for(i=0;i<carryCount;i++)carrySet[slots[i]]=true;
+    for(i=carryCount;i<carryCount+borrowCount;i++)borrowSet[slots[i]]=true;
+    for(i=0;i<count;i++){
+      if(carrySet[i])qs.push(genCarryAdd(p.difficulty,rng));
+      else if(borrowSet[i])qs.push(genBorrowSub(p.difficulty,rng));
+      else qs.push(genQ(types[i%types.length],p.difficulty,rng))
+    }
     return qs
   },
-  formatQuestion:function(q,i){
-    var n=i+1;
+  formatQuestion:function(q,i,showHint){
+    var n=i+1,hint='';
+    if(showHint!==false)hint=q.tag==='carry'?'<span class="q-hint">进位</span>':q.tag==='borrow'?'<span class="q-hint">借位</span>':'';
     return{n,text:q.a+' '+q.symbol+' '+q.b+' = ___',answer:q.ans,
-      html:'<span class="q-num">'+n+'.</span><span class="q-body"><span class="op">'+q.a+'</span><span class="op">'+q.symbol+'</span><span class="op">'+q.b+'</span><span class="eq">=</span><span class="blank"></span></span>'}
+      html:'<span class="q-num">'+n+'.</span><span class="q-body"><span class="op">'+q.a+'</span><span class="op">'+q.symbol+'</span><span class="op">'+q.b+'</span><span class="eq">=</span><span class="blank"></span></span>'+hint}
   }
 };
 })();
@@ -183,8 +243,8 @@ window.Engine={
 'use strict';
 window.PrintLayout={
   renderAll:function(qs,opts){
-    opts=opts||{};var pp=opts.perPage||15,cols=opts.cols||3,sa=opts.showAnswer||'no',sp=opts.scorePerQ||5;
-    var fmt=qs.map(function(q,i){return Engine.formatQuestion(q,i)}),pages=[];
+    opts=opts||{};var pp=opts.perPage||15,cols=opts.cols||3,sa=opts.showAnswer||'no',sp=opts.scorePerQ||5,sh=opts.showHint!==false;
+    var fmt=qs.map(function(q,i){return Engine.formatQuestion(q,i,sh)}),pages=[];
     for(var i=0;i<fmt.length;i+=pp)pages.push(fmt.slice(i,i+pp));
     var h='';
     for(i=0;i<pages.length;i++)h+=renderPage(pages[i],{n:i+1,t:pages.length,cols:cols,sa:sa,sp:sp});
@@ -212,27 +272,32 @@ function renderAns(all){
 // ===================== app.js =====================
 (function(){
 'use strict';
-var err=document.getElementById('errorBox'),con=document.getElementById('printContainer');
+var err=document.getElementById('errorBox'),con=document.getElementById('printContainer'),lastQs=null,lastOpts=null;
 function showError(m){err.style.display='block';err.textContent='错误: '+m;con.innerHTML=''}
 function $(id){return document.getElementById(id)}
+function clampPct(v){v=parseInt(v,10);return isNaN(v)?0:Math.min(100,Math.max(0,v))}
 function getOpts(){
   var cbs=document.querySelectorAll('.op-cb:checked'),types=[];
   for(var i=0;i<cbs.length;i++)types.push(cbs[i].value);
   var pp=parseInt($('perPage').value,10)||15,pg=parseInt($('pages').value,10)||1;
-  return{types:types,pp:pp,pg:pg,count:pp*pg,cols:parseInt($('columns').value,10)||3,sa:$('showAnswer').value,seed:$('seed').value,sp:parseInt($('scorePerQ')?$('scorePerQ').value:5,10)||5}
+  return{types:types,pp:pp,pg:pg,count:pp*pg,cols:parseInt($('columns').value,10)||3,sa:$('showAnswer').value,seed:$('seed').value,sp:parseInt($('scorePerQ')?$('scorePerQ').value:5,10)||5,showHint:$('showHint').checked,carryPct:clampPct($('carryPct').value),borrowPct:clampPct($('borrowPct').value)}
+}
+function render(qs,o){
+  var h=PrintLayout.renderAll(qs,{perPage:o.pp,cols:o.cols,showAnswer:o.sa,scorePerQ:o.sp,showHint:o.showHint});
+  con.innerHTML=h;err.style.display='none'
 }
 function gen(){
   try{
     var o=getOpts();
     if(!o.types.length){showError('请至少选择一种题型');return}
-    var qs=Engine.generateBatch({types:o.types,count:o.count,difficulty:$('difficulty').value,seed:o.seed||void 0});
-    var h=PrintLayout.renderAll(qs,{perPage:o.pp,cols:o.cols,showAnswer:o.sa,scorePerQ:o.sp});
-    con.innerHTML=h;err.style.display='none'
+    lastQs=Engine.generateBatch({types:o.types,count:o.count,difficulty:$('difficulty').value,seed:o.seed||void 0,carryPct:o.carryPct,borrowPct:o.borrowPct});
+    lastOpts=o;render(lastQs,o)
   }catch(e){showError(e.message+'\\n'+e.stack)}
 }
 try{
   $('btnGenerate').addEventListener('click',gen);
   $('btnPrint').addEventListener('click',function(){window.print()});
+  $('showHint').addEventListener('change',function(){if(lastQs&&lastOpts){lastOpts.showHint=$('showHint').checked;render(lastQs,lastOpts)}});
   gen()
 }catch(e){showError(e.message)}
 })();
